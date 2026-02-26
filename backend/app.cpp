@@ -2,6 +2,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <cstdlib>
 
 int main() {
     int server_fd, new_socket;
@@ -10,9 +11,11 @@ int main() {
     int addrlen = sizeof(address);
     char buffer[30000] = {0};
 
+    // Create socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
+    // Bind to port 8080
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(8080);
@@ -26,16 +29,24 @@ int main() {
         new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         read(new_socket, buffer, 30000);
 
-        char hostname[1024];
-        gethostname(hostname, 1024);
+        // Get backend name from environment variable
+        char* backend_name = getenv("BACKEND_NAME");
 
-        std::string body = "Served by backend: ";
-        body += hostname;
+        std::string name;
+        if (backend_name != nullptr) {
+            name = backend_name;
+        } else {
+            name = "unknown";
+        }
+
+        std::string body = "Served by backend: " + name;
 
         std::string response =
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: text/plain\r\n"
-            "\r\n" + body;
+            "Content-Length: " + std::to_string(body.length()) + "\r\n"
+            "\r\n" +
+            body;
 
         send(new_socket, response.c_str(), response.length(), 0);
         close(new_socket);
