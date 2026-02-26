@@ -26,11 +26,16 @@ int main() {
         new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         read(new_socket, buffer, 30000);
 
+        char hostname[1024];
+        gethostname(hostname, 1024);
+
+        std::string body = "Served by backend: ";
+        body += hostname;
+
         std::string response =
             "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/html\r\n"
-            "\r\n"
-            "<h1>Served by backend container</h1>";
+            "Content-Type: text/plain\r\n"
+            "\r\n" + body;
 
         send(new_socket, response.c_str(), response.length(), 0);
         close(new_socket);
