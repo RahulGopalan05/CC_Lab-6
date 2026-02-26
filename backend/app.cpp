@@ -2,7 +2,6 @@
 #include <cstring>
 #include <unistd.h>
 #include <netinet/in.h>
-#include <cstdlib>
 
 int main() {
     int server_fd, new_socket;
@@ -29,17 +28,12 @@ int main() {
         new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         read(new_socket, buffer, 30000);
 
-        // Get backend name from environment variable
-        char* backend_name = getenv("BACKEND_NAME");
+        // Get container hostname (this will be container ID)
+        char hostname[1024];
+        gethostname(hostname, sizeof(hostname));
 
-        std::string name;
-        if (backend_name != nullptr) {
-            name = backend_name;
-        } else {
-            name = "unknown";
-        }
-
-        std::string body = "Served by backend: " + name;
+        std::string body = "Served by backend: ";
+        body += hostname;
 
         std::string response =
             "HTTP/1.1 200 OK\r\n"
